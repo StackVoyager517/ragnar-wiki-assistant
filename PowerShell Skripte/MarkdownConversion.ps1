@@ -2,6 +2,7 @@
 
 Konvertiert die zuvor exportieren HTML Dateien in ein Markdown Format
 Setzt Metadaten
+Parameter müssen bei Skriptaufruf übergeben werden
 
 #>
 
