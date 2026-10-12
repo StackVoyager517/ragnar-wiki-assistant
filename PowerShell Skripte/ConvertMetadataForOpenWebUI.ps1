@@ -96,12 +96,30 @@ foreach ($metadataFile in $metadataFiles) {
             }
         }
 
-        # Manche PowerShell-Versionen lesen den Zeitstempel als DateTime ein.
-        # In diesem Fall wieder als ISO-8601-Zeichenkette mit Zeitzone ausgeben.
+      # Zeitstempel einheitlich als TT-MM-JJJJ (UTC-Datum) ausgeben.
+        # PowerShell 7 liefert über ConvertFrom-Json ein DateTime-Objekt,
+        # Windows PowerShell 5.1 liefert dagegen einen String.
         $revisionTimestamp = $metadata.article.revision_timestamp
+
         if ($revisionTimestamp -is [datetime]) {
-            $revisionTimestamp = $revisionTimestamp.ToString("yyyy-MM-ddTHH:mm:ssK")
+            # PS 7 kann den Wert je nach Version in lokale Zeit umrechnen -> zurück nach UTC
+            if ($revisionTimestamp.Kind -eq [System.DateTimeKind]::Local) {
+                $revisionTimestamp = $revisionTimestamp.ToUniversalTime()
+            }
         }
+        else {
+            $revisionTimestamp = [datetime]::Parse(
+                [string]$revisionTimestamp,
+                [System.Globalization.CultureInfo]::InvariantCulture,
+                [System.Globalization.DateTimeStyles]::AssumeUniversal -bor
+                [System.Globalization.DateTimeStyles]::AdjustToUniversal
+            )
+        }
+
+        $revisionTimestamp = $revisionTimestamp.ToString(
+            'dd-MM-yyyy',
+            [System.Globalization.CultureInfo]::InvariantCulture
+        )
 
         # Neues, flaches Metadatenformat aufbauen.
         # source_url verweist wie im Zielbeispiel auf die exportierte Revision.
