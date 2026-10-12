@@ -1,7 +1,7 @@
-
-<# 
+<#
 
 Entfernt die Bearbeitungslinks (Buttons) in den Artikeln 
+Macht aus relativen URLs absolute, damit die URLs klickbar sind und auf die MediaWiki Instanz verweisen
 Parameter müssen bei Skriptaufruf übergeben werden
 
 #>
@@ -9,6 +9,10 @@ Parameter müssen bei Skriptaufruf übergeben werden
 param (
     [Parameter(Mandatory = $true)]
     [string]$MarkdownDirectory,
+
+    # Basisadresse des Wikis. Relative Links der Form ](/Wiki/... werden
+    # in absolute Links der Form ](https://<BaseURL>/Wiki/... umgewandelt.
+    [string]$BaseUrl,
 
     # Mit -Preview werden nur die gefundenen Änderungen angezeigt.
     [switch]$Preview
@@ -21,11 +25,15 @@ if (-not (Test-Path -LiteralPath $MarkdownDirectory -PathType Container)) {
     throw "Das Markdown-Verzeichnis wurde nicht gefunden: $MarkdownDirectory"
 }
 
-$markdownFiles = Get-ChildItem `
+# Abschließenden Schrägstrich entfernen, damit keine doppelten "//" entstehen.
+$BaseUrl = $BaseUrl.TrimEnd("/")
+
+# @() stellt auch bei einer einzigen Datei eine Liste bereit.
+$markdownFiles = @(Get-ChildItem `
     -LiteralPath $MarkdownDirectory `
     -Filter "*.md" `
     -File |
-    Sort-Object Name
+    Sort-Object Name)
 
 if ($markdownFiles.Count -eq 0) {
     throw "Im angegebenen Verzeichnis wurden keine Markdown-Dateien gefunden."
@@ -35,13 +43,19 @@ $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
 
 $backupDirectory = Join-Path `
     -Path (Split-Path $MarkdownDirectory -Parent) `
-    -ChildPath "markdown_backup_editlinks_$timestamp"
+    -ChildPath "markdown_backup_cleanup_$timestamp"
 
 $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+
+# Muster für relative Wiki-URLs direkt nach "](".
+# Erfasst Bildquellen und Linkziele, Alternativtexte und Titel bleiben unverändert.
+$relativeUrlPattern = '\]\(/Wiki/'
+$absoluteUrlReplacement = "]($BaseUrl/Wiki/"
 
 $processedFiles = 0
 $modifiedFiles = 0
 $removedEditBlocks = 0
+$convertedUrls = 0
 $errorCount = 0
 $backupCreated = $false
 
@@ -67,6 +81,7 @@ foreach ($markdownFile in $markdownFiles) {
 
         $removedInCurrentFile = 0
 
+        # Schritt 1: MediaWiki-Bearbeitungslinks aus Überschriften entfernen
         for ($lineNumber = 0; $lineNumber -lt $lines.Count; $lineNumber++) {
             $line = $lines[$lineNumber]
             $trimmedLine = $line.TrimStart()
@@ -140,14 +155,32 @@ foreach ($markdownFile in $markdownFiles) {
             }
         }
 
-        if ($removedInCurrentFile -gt 0) {
-            $cleanedContent = $lines -join $lineBreak
+        $cleanedContent = $lines -join $lineBreak
 
+        # Schritt 2: Relative Wiki-URLs in absolute URLs umwandeln.
+        # Läuft nach Schritt 1, damit entfernte Bearbeitungslinks nicht
+        # unnötig umgeschrieben werden.
+        $convertedInCurrentFile = [regex]::Matches(
+            $cleanedContent,
+            $relativeUrlPattern
+        ).Count
+
+        if ($convertedInCurrentFile -gt 0) {
+            $cleanedContent = [regex]::Replace(
+                $cleanedContent,
+                $relativeUrlPattern,
+                $absoluteUrlReplacement
+            )
+            $convertedUrls += $convertedInCurrentFile
+        }
+
+        if ($removedInCurrentFile -gt 0 -or $convertedInCurrentFile -gt 0) {
             if ($Preview) {
                 Write-Host (
-                    "[Vorschau] {0}: {1} Bearbeitungslink(s)" -f
+                    "[Vorschau] {0}: {1} Bearbeitungslink(s), {2} relative URL(s)" -f
                     $markdownFile.Name,
-                    $removedInCurrentFile
+                    $removedInCurrentFile,
+                    $convertedInCurrentFile
                 )
             }
             else {
@@ -173,9 +206,10 @@ foreach ($markdownFile in $markdownFiles) {
                 )
 
                 Write-Host (
-                    "{0}: {1} Bearbeitungslink(s) entfernt" -f
+                    "{0}: {1} Bearbeitungslink(s) entfernt, {2} relative URL(s) umgewandelt" -f
                     $markdownFile.Name,
-                    $removedInCurrentFile
+                    $removedInCurrentFile,
+                    $convertedInCurrentFile
                 )
             }
 
@@ -198,11 +232,12 @@ foreach ($markdownFile in $markdownFiles) {
 Write-Host ""
 Write-Host "Ergebnis der Bereinigung"
 Write-Host "------------------------"
-Write-Host "Markdown-Dateien insgesamt: $($markdownFiles.Count)"
-Write-Host "Erfolgreich geprüft:        $processedFiles"
-Write-Host "Betroffene Dateien:         $modifiedFiles"
-Write-Host "Entfernte Bearbeitungslinks: $removedEditBlocks"
-Write-Host "Fehler:                     $errorCount"
+Write-Host "Markdown-Dateien insgesamt:   $($markdownFiles.Count)"
+Write-Host "Erfolgreich geprüft:          $processedFiles"
+Write-Host "Betroffene Dateien:           $modifiedFiles"
+Write-Host "Entfernte Bearbeitungslinks:  $removedEditBlocks"
+Write-Host "Umgewandelte relative URLs:   $convertedUrls"
+Write-Host "Fehler:                       $errorCount"
 
 if ($Preview) {
     Write-Host ""
@@ -215,5 +250,5 @@ elseif ($backupCreated) {
 }
 else {
     Write-Host ""
-    Write-Host "Es wurden keine MediaWiki-Bearbeitungslinks gefunden."
+    Write-Host "Es wurden keine Bearbeitungslinks oder relativen URLs gefunden."
 }
