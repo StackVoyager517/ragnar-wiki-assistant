@@ -1,0 +1,70 @@
+services:
+  ollama:
+    image: ollama/ollama:0.33.0
+    container_name: ollama
+    restart: unless-stopped
+
+    # Übergibt die vorhandene NVIDIA-GPU an den Container.
+    gpus: all
+
+    environment:
+      # Ein Modellkontext von 32768 Token belegt ca. 10 GB des VRAMs
+      OLLAMA_CONTEXT_LENGTH: "32768"
+
+      # Das Modell bleibt nach der letzten Anfrage 60 Minuten geladen.
+      OLLAMA_KEEP_ALIVE: "60m"
+
+      # Log Level für Analysen
+      OLLAMA_DEBUG: "1"
+      OLLAMA_DEBUG_LOG_REQUESTS: "true"
+
+    volumes:
+      # Modelle bleiben nach dem Neuerstellen des Containers erhalten.
+      - ollama-data:/root/.ollama
+
+    networks:
+      - llm-internal
+
+    ports:
+      - "127.0.0.1:11434:11434"
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:v0.11.4
+    container_name: open-webui
+    restart: unless-stopped
+
+    depends_on:
+      - ollama
+
+    ports:
+      # Das Frontend ist nur innerhalb der VM erreichbar.
+      # Der Zugriff von deinem Rechner erfolgt über einen SSH-Tunnel.
+      - "127.0.0.1:3000:8080"
+
+    environment:
+      # Der Containername "ollama" wird innerhalb des Docker-Netzwerks aufgelöst.
+      OLLAMA_BASE_URL: "http://ollama:11434"
+
+      # Der Wert wird aus der nicht veröffentlichten .env-Datei gelesen.
+      WEBUI_SECRET_KEY: "${WEBUI_SECRET_KEY}"
+
+      #Metadaten-Felder angeben
+      RAG_SOURCE_METADATA_KEYS: "title,source_url,revision_id,revision_timestamp"
+
+      #Log Level für Analyse
+      GLOBAL_LOG_LEVEL: "DEBUG"
+
+    volumes:
+      # Benutzerkonto, Chats und Einstellungen bleiben erhalten.
+      - open-webui-data:/app/backend/data
+
+    networks:
+      - llm-internal
+
+volumes:
+  ollama-data:
+  open-webui-data:
+
+networks:
+  llm-internal:
+    driver: bridge
