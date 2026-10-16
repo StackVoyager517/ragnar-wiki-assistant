@@ -153,7 +153,7 @@ Die Skripte für den Export, die Aufbereitung und den Import liegen im Verzeichn
 | 1 | [ExportAllSitesAsHTMLwithMetadata.ps1](./scripts/ExportAllSitesAsHTMLwithMetadata.ps1) | MediaWiki-Inhalte exportieren und Artikelinhalte mit zugehörigen Metadaten bereitstellen. |
 | 2 | [NewMetadataFormatAndArticleExclusion.ps1](./scripts/NewMetadataFormatAndArticleExclusion.ps1) | Metadaten aufbereiten und Artikel für den Prototyp als eingeschlossen beziehungsweise ausgeschlossen kennzeichnen. |
 | 3 | [MarkdownConversion.ps1](./scripts/MarkdownConversion.ps1) | HTML-Dateien lokal mit MarkItDown in Markdown konvertieren. |
-| 4 | [CleanupBearbeitungslinks.ps1](./scripts/CleanupBearbeitungslinks.ps1) | Verbliebene MediaWiki-Bearbeitungslinks aus den Markdown-Dateien entfernen. |
+| 4 | [CleanMarkdown_v2.ps1](./scripts/CleanupBearbeitungslinks.ps1) | Entfernt MediaWiki-Bearbeitungslinks und ersetzt die Bild URLs durch absolute Pfade. |
 | 5 | [ConvertMetadataForOpenWebUI.ps1](./scripts/ConvertMetadataForOpenWebUI.ps1) | Quellenmetadaten der vorgesehenen Markdown-Dateien für Open WebUI bereitstellen. |
 | 6 | [ImportWikiToOpenWebUI.ps1](./scripts/ImportWikiToOpenWebUI.ps1) | Markdown-Dateien und zugehörige Metadaten über die API in eine Open-WebUI-Wissenssammlung importieren. |
 
