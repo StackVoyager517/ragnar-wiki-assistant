@@ -1,0 +1,39 @@
+{
+  "openwebui_base_uri": "http://127.0.0.1:3000",
+  "authentication_mode": "bearer_environment_variable",
+  "token_environment_variable": "OPENWEBUI_API_TOKEN",
+  "model": "qwen3.5:9b-q4_K_M",
+  "reference_cards_directory": "reference-cards",
+  "output_directory": "pilot-runs",
+  "timeout_seconds": 300,
+  "poll_interval_ms": 1000,
+  "include_card_ids": ["P-001", "P-002", "P-003", "P-004", "P-005", "P-006", "P-007", "P-008", "P-009", "P-010", "P-011", "P-012", "P-013", "P-014", "P-015", "P-016", "P-017", "P-018", "P-019", "P-020"],
+  "knowledge_base_binding_confirmed": true,
+  "model_item": {
+    "id": "qwen3.5:9b-q4_K_M",
+    "name": "qwen3.5:9b-q4_K_M",
+    "object": "model",
+    "created": 0,
+    "owned_by": "ollama",
+    "loaded": false,
+    "connection_type": "local",
+    "tags": [],
+    "info": {
+      "id": "qwen3.5:9b-q4_K_M",
+      "base_model_id": null,
+      "name": "qwen3.5:9b-q4_K_M",
+      "meta": {
+        "knowledge": [
+          {
+            "id": "e535604d-5ee3-45dd-ab00-c0fbb0cfe28d",
+            "name": "Wiki_Wissensbestand_v2",
+            "type": "collection",
+            "description": "Bereinigter Wissensbestand für Pilotierung"
+          }
+        ]
+      },
+      "actions": [],
+      "filters": []
+    }
+  }
+}
