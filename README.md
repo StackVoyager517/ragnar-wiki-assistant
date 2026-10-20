@@ -66,7 +66,7 @@ chmod 600 .env
 
 Eine vorhandene .env muss bereits einen gültigen Eintrag für WEBUI_SECRET_KEY enthalten. Der Schlüssel wird bei Neustarts und Container-Neuerstellungen beibehalten.
 
-Die .env wird nicht in Git veröffentlicht. Im Repository muss die Datei .gitignore deshalb mindestens diesen Eintrag enthalten:
+Die .env wird nicht in Git veröffentlicht und sollte über die .gitignore Datei ausgenommen werden.
 
 ## 3. Container herunterladen und starten
 
